@@ -1,6 +1,7 @@
 package com.project.driveapi.controller;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.project.driveapi.dto.FolderDto;
 import com.project.driveapi.service.DriveService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,7 +38,14 @@ public class DriveController {
     }
 
     @PostMapping(value = "/upload")
-    public List<String> uploadFiles(@RequestParam("files") List<MultipartFile> multipartFiles) throws Exception {
-        return driveService.uploadFiles(flow, multipartFiles);
+    public List<String> uploadFiles(@RequestParam("files") List<MultipartFile> multipartFiles,
+                                    @RequestParam(value = "targetFolderId", required = false) String targetFolderId
+    ) throws Exception {
+        return driveService.uploadFiles(flow, multipartFiles, targetFolderId);
+    }
+
+    @PostMapping(value = "/create/folder")
+    public String createFolder(@RequestBody FolderDto folder) throws Exception {
+        return driveService.createFolder(flow, folder);
     }
 }

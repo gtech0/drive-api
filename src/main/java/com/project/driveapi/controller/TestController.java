@@ -95,7 +95,7 @@ public class TestController {
 //        response.getWriter().write(fileReference);
 //    }
 //
-//    @GetMapping(value = { "/uploadinfolder" })
+//    @GetMapping(value = "/uploadinfolder")
 //    public void uploadFileInFolder(HttpServletResponse response) throws Exception {
 //        Credential cred = flow.loadCredential(USER_IDENTIFIER_KEY);
 //

@@ -14,6 +14,7 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
+import com.project.driveapi.dto.FolderDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
@@ -24,15 +25,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class DriveService {
     private final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    private final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
+    private final Set<String> SCOPES = DriveScopes.all();
     private final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
     private final Tika tika;
 
@@ -75,7 +73,8 @@ public class DriveService {
         response.sendRedirect(redirectURL);
     }
 
-    public String saveAuthorizationCode(HttpServletRequest request, GoogleAuthorizationCodeFlow flow) throws Exception {
+    public String saveAuthorizationCode(HttpServletRequest request,
+                                        GoogleAuthorizationCodeFlow flow) throws Exception {
         String code = request.getParameter("code");
         if (code != null) {
             saveToken(code, flow);
@@ -91,12 +90,10 @@ public class DriveService {
         flow.createAndStoreCredential(response, USER_IDENTIFIER_KEY);
     }
 
-    public List<String> uploadFiles(GoogleAuthorizationCodeFlow flow, List<MultipartFile> multipartFiles) throws Exception {
-        Credential credentials = flow.loadCredential(USER_IDENTIFIER_KEY);
-        Drive drive = new Drive
-                .Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
-                .setApplicationName(APPLICATION_NAME)
-                .build();
+    public List<String> uploadFiles(GoogleAuthorizationCodeFlow flow,
+                                    List<MultipartFile> multipartFiles,
+                                    String targetFolderId) throws Exception {
+        Drive drive = getDrive(flow);
 
         List<String> uploadedFilesIds = new ArrayList<>();
         for (MultipartFile multipartFile : multipartFiles) {
@@ -110,6 +107,9 @@ public class DriveService {
             File googleFile = new File();
             googleFile.setName(fileName);
             googleFile.setMimeType(fileMimeType);
+            if (targetFolderId != null) {
+                googleFile.setParents(Collections.singletonList(targetFolderId));
+            }
 
             File uploadedFile = drive
                     .files()
@@ -122,6 +122,33 @@ public class DriveService {
         }
 
         return uploadedFilesIds;
+    }
+
+    public String createFolder(GoogleAuthorizationCodeFlow flow,
+                               FolderDto folder) throws Exception {
+        Drive drive = getDrive(flow);
+
+        File googleFile = new File();
+        googleFile.setName(folder.getFolderName());
+        googleFile.setMimeType("application/vnd.google-apps.folder");
+        if (folder.getTargetFolderId() != null) {
+            googleFile.setParents(Collections.singletonList(folder.getTargetFolderId()));
+        }
+
+        File uploadedFile = drive
+                .files()
+                .create(googleFile)
+                .setFields("id")
+                .execute();
+        return String.format("fileID: '%s'", uploadedFile.getId());
+    }
+
+    private Drive getDrive(GoogleAuthorizationCodeFlow flow) throws IOException {
+        Credential credentials = flow.loadCredential(USER_IDENTIFIER_KEY);
+        return new Drive
+                .Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
+                .setApplicationName(APPLICATION_NAME)
+                .build();
     }
 
     private java.io.File multipartFileToFile(MultipartFile multipartFile) throws IOException {
