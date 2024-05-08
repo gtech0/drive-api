@@ -1,0 +1,24 @@
+google:
+  oauth:
+    callback:
+      uri: http://localhost:8080/api/drive/oauth
+  secret key:
+    path: /credentials-web.json
+  tokens:
+    path: tokens
+  user:
+    id: user
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  application:
+    name: Drive API
+  web:
+    resources:
+      cache:
+        cache control:
+          max-age: 1
+server:
+  port: 8080
