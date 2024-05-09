@@ -26,7 +26,7 @@ public class ControllerErrorHandler {
 
     @ExceptionHandler(GoogleJsonResponseException.class)
     public ResponseEntity<Object> handleGoogleJsonResponseException(GoogleJsonResponseException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        ErrorResponse errorResponse = new ErrorResponse(new Date(), ex.getStatusCode(), ex.getDetails().getMessage());
+        return ResponseEntity.status(ex.getStatusCode()).body(errorResponse);
     }
 }

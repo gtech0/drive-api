@@ -54,65 +54,6 @@ public class TestController {
 //        return isUserAuthenticated ? "dashboard.html" : "index.html";
 //    }
 //
-//    @GetMapping(value = "/sign-in")
-//    public void doGoogleSignIn(HttpServletResponse response) throws Exception {
-//        GoogleAuthorizationCodeRequestUrl url = flow.newAuthorizationUrl();
-//        String redirectURL = url.setRedirectUri(CALLBACK_URI).setAccessType("offline").build();
-//        response.sendRedirect(redirectURL);
-//    }
-//
-//    @GetMapping(value = "/oauth")
-//    public String saveAuthorizationCode(HttpServletRequest request) throws Exception {
-//        String code = request.getParameter("code");
-//        if (code != null) {
-//            saveToken(code);
-//
-//            return "dashboard.html";
-//        }
-//
-//        return "index.html";
-//    }
-//
-//    private void saveToken(String code) throws Exception {
-//        GoogleTokenResponse response = flow.newTokenRequest(code).setRedirectUri(CALLBACK_URI).execute();
-//        flow.createAndStoreCredential(response, USER_IDENTIFIER_KEY);
-//    }
-//
-//    @GetMapping(value = "/create")
-//    public void createFile(HttpServletResponse response) throws Exception {
-//        Credential cred = flow.loadCredential(USER_IDENTIFIER_KEY);
-//
-//        Drive drive = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, cred)
-//                .setApplicationName("googledrivespringbootexample").build();
-//
-//        File file = new File();
-//        file.setName("profile.jpg");
-//
-//        FileContent content = new FileContent("image/jpeg", new java.io.File("D:\\practice\\sbtgd\\sample.jpg"));
-//        File uploadedFile = drive.files().create(file, content).setFields("id").execute();
-//
-//        String fileReference = String.format("{fileID: '%s'}", uploadedFile.getId());
-//        response.getWriter().write(fileReference);
-//    }
-//
-//    @GetMapping(value = "/uploadinfolder")
-//    public void uploadFileInFolder(HttpServletResponse response) throws Exception {
-//        Credential cred = flow.loadCredential(USER_IDENTIFIER_KEY);
-//
-//        Drive drive = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, cred)
-//                .setApplicationName("googledrivespringbootexample").build();
-//
-//        File file = new File();
-//        file.setName("digit.jpg");
-//        file.setParents(List.of("1_TsS7arQRBMY2t4NYKNdxta8Ty9r6wva"));
-//
-//        FileContent content = new FileContent("image/jpeg", new java.io.File("D:\\practice\\sbtgd\\digit.jpg"));
-//        File uploadedFile = drive.files().create(file, content).setFields("id").execute();
-//
-//        String fileReference = String.format("{fileID: '%s'}", uploadedFile.getId());
-//        response.getWriter().write(fileReference);
-//    }
-//
 //    @GetMapping(value = { "/listfiles" }, produces = { "application/json" })
 //    public @ResponseBody List<FileItemDTO> listFiles() throws Exception {
 //        Credential cred = flow.loadCredential(USER_IDENTIFIER_KEY);

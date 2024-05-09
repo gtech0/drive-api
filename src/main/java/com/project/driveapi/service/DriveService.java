@@ -14,7 +14,10 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
 import com.project.driveapi.dto.FolderDto;
+import com.project.driveapi.dto.GoogleFileDto;
+import com.project.driveapi.dto.GoogleFileShortDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
@@ -106,7 +109,6 @@ public class DriveService {
 
             File googleFile = new File();
             googleFile.setName(fileName);
-            googleFile.setMimeType(fileMimeType);
             if (targetFolderId != null) {
                 googleFile.setParents(Collections.singletonList(targetFolderId));
             }
@@ -141,6 +143,73 @@ public class DriveService {
                 .setFields("id")
                 .execute();
         return String.format("fileID: '%s'", uploadedFile.getId());
+    }
+
+    public List<GoogleFileDto> listFiles(GoogleAuthorizationCodeFlow flow) throws Exception {
+        Drive drive = getDrive(flow);
+
+        List<GoogleFileDto> files = new ArrayList<>();
+        FileList googleFiles = drive
+                .files()
+                .list()
+                .setFields("files(id,name,mimeType,createdTime,modifiedTime,trashed,size,parents)")
+                .execute();
+
+        for (File googleFile : googleFiles.getFiles()) {
+            files.add(GoogleFileDto.builder()
+                    .id(googleFile.getId())
+                    .name(googleFile.getName())
+                    .mimeType(googleFile.getMimeType())
+                    .createdTime(googleFile.getCreatedTime())
+                    .modifiedTime(googleFile.getModifiedTime())
+                    .trashed(googleFile.getTrashed())
+                    .size(googleFile.getSize())
+                    .parents(googleFile.getParents())
+                    .build());
+        }
+
+        return files;
+    }
+
+    public GoogleFileShortDto getFile(GoogleAuthorizationCodeFlow flow, String fileId) throws Exception {
+        Drive drive = getDrive(flow);
+
+        File googleFile = drive
+                .files()
+                .get(fileId)
+                .execute();
+
+        return GoogleFileShortDto.builder()
+                .id(googleFile.getId())
+                .name(googleFile.getName())
+                .mimeType(googleFile.getMimeType())
+                .build();
+    }
+
+    public void deleteFile(GoogleAuthorizationCodeFlow flow, String fileId) throws Exception {
+        Drive drive = getDrive(flow);
+        drive.files().delete(fileId).execute();
+    }
+
+    public void trashFile(GoogleAuthorizationCodeFlow flow, String fileId) throws Exception {
+        Drive drive = getDrive(flow);
+
+        File googleFile = new File();
+        googleFile.setTrashed(true);
+        drive.files().update(fileId, googleFile).execute();
+    }
+
+    public void untrashFile(GoogleAuthorizationCodeFlow flow, String fileId) throws Exception {
+        Drive drive = getDrive(flow);
+
+        File googleFile = new File();
+        googleFile.setTrashed(false);
+        drive.files().update(fileId, googleFile).execute();
+    }
+
+    public void emptyTrash(GoogleAuthorizationCodeFlow flow) throws Exception {
+        Drive drive = getDrive(flow);
+        drive.files().emptyTrash().execute();
     }
 
     private Drive getDrive(GoogleAuthorizationCodeFlow flow) throws IOException {
