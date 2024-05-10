@@ -20,5 +20,6 @@ spring:
       cache:
         cache control:
           max-age: 1
+
 server:
   port: 8080

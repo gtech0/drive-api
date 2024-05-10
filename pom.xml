@@ -17,6 +17,7 @@
         <java.version>22</java.version>
         <google-api.version>2.4.1</google-api.version>
         <tika.version>2.9.2</tika.version>
+        <spring-doc.version>2.5.0</spring-doc.version>
     </properties>
     <dependencies>
         <dependency>
@@ -63,6 +64,11 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers-standard-package</artifactId>
             <version>${tika.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${spring-doc.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-fileupload</groupId>

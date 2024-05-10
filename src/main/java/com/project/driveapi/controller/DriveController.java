@@ -1,6 +1,7 @@
 package com.project.driveapi.controller;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.project.driveapi.dto.DownloadDto;
 import com.project.driveapi.dto.FolderDto;
 import com.project.driveapi.dto.GoogleFileDto;
 import com.project.driveapi.dto.GoogleFileShortDto;
@@ -46,10 +47,10 @@ public class DriveController {
         return driveService.uploadFiles(flow, multipartFiles, targetFolderId);
     }
 
-//    @GetMapping(value = "/files/download")
-//    public List<String> downloadFiles() throws Exception {
-//
-//    }
+    @GetMapping(value = "/files/download")
+    public void downloadFiles(@RequestBody DownloadDto download) throws Exception {
+        driveService.downloadFiles(flow, download);
+    }
 
     @PostMapping(value = "/files/create/folder")
     public String createFolder(@RequestBody FolderDto folder) throws Exception {

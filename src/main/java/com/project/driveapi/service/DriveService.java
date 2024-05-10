@@ -15,6 +15,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.project.driveapi.dto.DownloadDto;
 import com.project.driveapi.dto.FolderDto;
 import com.project.driveapi.dto.GoogleFileDto;
 import com.project.driveapi.dto.GoogleFileShortDto;
@@ -28,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -126,6 +129,18 @@ public class DriveService {
         return uploadedFilesIds;
     }
 
+    public void downloadFiles(GoogleAuthorizationCodeFlow flow, DownloadDto download) throws Exception {
+        Drive drive = getDrive(flow);
+
+        for (Map.Entry<String, String> file : download.getFiles().entrySet()) {
+            OutputStream fos = new FileOutputStream(file.getValue());
+            drive.files()
+                    .get(file.getKey())
+                    .executeMediaAndDownloadTo(fos);
+            fos.close();
+        }
+    }
+
     public String createFolder(GoogleAuthorizationCodeFlow flow,
                                FolderDto folder) throws Exception {
         Drive drive = getDrive(flow);
@@ -160,8 +175,8 @@ public class DriveService {
                     .id(googleFile.getId())
                     .name(googleFile.getName())
                     .mimeType(googleFile.getMimeType())
-                    .createdTime(googleFile.getCreatedTime())
-                    .modifiedTime(googleFile.getModifiedTime())
+                    .createdTime(unixToLocalDateTime(googleFile.getCreatedTime().getValue()))
+                    .modifiedTime(unixToLocalDateTime(googleFile.getModifiedTime().getValue()))
                     .trashed(googleFile.getTrashed())
                     .size(googleFile.getSize())
                     .parents(googleFile.getParents())
@@ -233,5 +248,11 @@ public class DriveService {
         String extensionType = tika.detect(fileName);
         System.out.println(extensionType);
         return extensionType;
+    }
+
+    private LocalDateTime unixToLocalDateTime(Long unixTime) {
+        return LocalDateTime
+                .ofInstant(Instant
+                        .ofEpochMilli(unixTime), TimeZone.getDefault().toZoneId());
     }
 }

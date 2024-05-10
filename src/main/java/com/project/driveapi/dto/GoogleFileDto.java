@@ -1,10 +1,10 @@
 package com.project.driveapi.dto;
 
-import com.google.api.client.util.DateTime;
 import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
@@ -17,9 +17,9 @@ public class GoogleFileDto implements Serializable {
 
     private String mimeType;
 
-    private DateTime createdTime;
+    private LocalDateTime createdTime;
 
-    private DateTime modifiedTime;
+    private LocalDateTime modifiedTime;
 
     private boolean trashed;
 
