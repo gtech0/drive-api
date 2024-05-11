@@ -15,10 +15,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-import com.project.driveapi.dto.DownloadDto;
-import com.project.driveapi.dto.FolderDto;
-import com.project.driveapi.dto.GoogleFileDto;
-import com.project.driveapi.dto.GoogleFileShortDto;
+import com.project.driveapi.dto.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
@@ -129,10 +126,10 @@ public class DriveService {
         return uploadedFilesIds;
     }
 
-    public void downloadFiles(GoogleAuthorizationCodeFlow flow, DownloadDto download) throws Exception {
+    public void downloadFiles(GoogleAuthorizationCodeFlow flow, Map<String, String> download) throws Exception {
         Drive drive = getDrive(flow);
 
-        for (Map.Entry<String, String> file : download.getFiles().entrySet()) {
+        for (Map.Entry<String, String> file : download.entrySet()) {
             OutputStream fos = new FileOutputStream(file.getValue());
             drive.files()
                     .get(file.getKey())
@@ -201,25 +198,32 @@ public class DriveService {
                 .build();
     }
 
-    public void deleteFile(GoogleAuthorizationCodeFlow flow, String fileId) throws Exception {
+    public void deleteFiles(GoogleAuthorizationCodeFlow flow, List<String> files) throws Exception {
         Drive drive = getDrive(flow);
-        drive.files().delete(fileId).execute();
+
+        for (String fileId : files) {
+            drive.files().delete(fileId).execute();
+        }
     }
 
-    public void trashFile(GoogleAuthorizationCodeFlow flow, String fileId) throws Exception {
+    public void trashFiles(GoogleAuthorizationCodeFlow flow, List<String> files) throws Exception {
         Drive drive = getDrive(flow);
 
-        File googleFile = new File();
-        googleFile.setTrashed(true);
-        drive.files().update(fileId, googleFile).execute();
+        for (String fileId : files) {
+            File googleFile = new File();
+            googleFile.setTrashed(true);
+            drive.files().update(fileId, googleFile).execute();
+        }
     }
 
-    public void untrashFile(GoogleAuthorizationCodeFlow flow, String fileId) throws Exception {
+    public void untrashFiles(GoogleAuthorizationCodeFlow flow, List<String> files) throws Exception {
         Drive drive = getDrive(flow);
 
-        File googleFile = new File();
-        googleFile.setTrashed(false);
-        drive.files().update(fileId, googleFile).execute();
+        for (String fileId : files) {
+            File googleFile = new File();
+            googleFile.setTrashed(false);
+            drive.files().update(fileId, googleFile).execute();
+        }
     }
 
     public void emptyTrash(GoogleAuthorizationCodeFlow flow) throws Exception {

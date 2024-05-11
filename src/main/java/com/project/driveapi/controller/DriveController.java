@@ -1,11 +1,9 @@
 package com.project.driveapi.controller;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.project.driveapi.dto.DownloadDto;
-import com.project.driveapi.dto.FolderDto;
-import com.project.driveapi.dto.GoogleFileDto;
-import com.project.driveapi.dto.GoogleFileShortDto;
+import com.project.driveapi.dto.*;
 import com.project.driveapi.service.DriveService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -30,12 +29,12 @@ public class DriveController {
         flow = driveService.getFlow();
     }
 
-    @GetMapping(value = "/sign-in")
+    @PostMapping(value = "/sign-in")
     public void googleSignIn(HttpServletResponse response) throws Exception {
         driveService.googleSignIn(response, flow);
     }
 
-    @GetMapping(value = "/oauth")
+    @PostMapping(value = "/oauth")
     public String saveAuthorizationCode(HttpServletRequest request) throws Exception {
         return driveService.saveAuthorizationCode(request, flow);
     }
@@ -48,7 +47,8 @@ public class DriveController {
     }
 
     @GetMapping(value = "/files/download")
-    public void downloadFiles(@RequestBody DownloadDto download) throws Exception {
+    public void downloadFiles(@Parameter(example = "{ \"fileId1\": \"absolutePath1\", \"fileId2\": \"absolutePath2\" }")
+                              @RequestBody Map<String, String> download) throws Exception {
         driveService.downloadFiles(flow, download);
     }
 
@@ -67,19 +67,19 @@ public class DriveController {
         return driveService.getFile(flow, fileId);
     }
 
-    @DeleteMapping(value = "/files/delete/{fileId}")
-    public void deleteFile(@PathVariable String fileId) throws Exception {
-        driveService.deleteFile(flow, fileId);
+    @DeleteMapping(value = "/files/delete")
+    public void deleteFiles(@RequestBody List<String> files) throws Exception {
+        driveService.deleteFiles(flow, files);
     }
 
-    @PostMapping(value = "/files/trash/{fileId}")
-    public void trashFile(@PathVariable String fileId) throws Exception {
-        driveService.trashFile(flow, fileId);
+    @PostMapping(value = "/files/trash")
+    public void trashFiles(@RequestBody List<String> files) throws Exception {
+        driveService.trashFiles(flow, files);
     }
 
-    @PostMapping(value = "/files/untrash/{fileId}")
-    public void untrashFile(@PathVariable String fileId) throws Exception {
-        driveService.untrashFile(flow, fileId);
+    @PostMapping(value = "/files/untrash")
+    public void untrashFiles(@RequestBody List<String> files) throws Exception {
+        driveService.untrashFiles(flow, files);
     }
 
     @DeleteMapping(value = "/files/trash")
