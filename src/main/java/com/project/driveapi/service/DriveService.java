@@ -15,6 +15,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.google.api.services.drive.model.Permission;
 import com.project.driveapi.dto.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -80,17 +81,11 @@ public class DriveService {
                                         GoogleAuthorizationCodeFlow flow) throws Exception {
         String code = request.getParameter("code");
         if (code != null) {
-            saveToken(code, flow);
-
-            return "successfully logged in";
+            GoogleTokenResponse response = flow.newTokenRequest(code).setRedirectUri(CALLBACK_URI).execute();
+            flow.createAndStoreCredential(response, USER_IDENTIFIER_KEY);
         }
 
-        return "already logged in";
-    }
-
-    private void saveToken(String code, GoogleAuthorizationCodeFlow flow) throws Exception {
-        GoogleTokenResponse response = flow.newTokenRequest(code).setRedirectUri(CALLBACK_URI).execute();
-        flow.createAndStoreCredential(response, USER_IDENTIFIER_KEY);
+        return "logged in";
     }
 
     public List<String> uploadFiles(GoogleAuthorizationCodeFlow flow,
@@ -164,7 +159,7 @@ public class DriveService {
         FileList googleFiles = drive
                 .files()
                 .list()
-                .setFields("files(id,name,mimeType,createdTime,modifiedTime,trashed,size,parents)")
+                .setFields("files(id,name,mimeType,createdTime,modifiedTime,permissionIds,trashed,size,parents)")
                 .execute();
 
         for (File googleFile : googleFiles.getFiles()) {
@@ -174,12 +169,12 @@ public class DriveService {
                     .mimeType(googleFile.getMimeType())
                     .createdTime(unixToLocalDateTime(googleFile.getCreatedTime().getValue()))
                     .modifiedTime(unixToLocalDateTime(googleFile.getModifiedTime().getValue()))
+                    .permissionIds(googleFile.getPermissionIds())
                     .trashed(googleFile.getTrashed())
                     .size(googleFile.getSize())
                     .parents(googleFile.getParents())
                     .build());
         }
-
         return files;
     }
 
@@ -229,6 +224,21 @@ public class DriveService {
     public void emptyTrash(GoogleAuthorizationCodeFlow flow) throws Exception {
         Drive drive = getDrive(flow);
         drive.files().emptyTrash().execute();
+    }
+
+    public void addPermission(GoogleAuthorizationCodeFlow flow, PermissionDto permission, String fileId) throws Exception {
+        Drive drive = getDrive(flow);
+
+        Permission newPermission = new Permission();
+        newPermission.setType(permission.getType().name());
+        newPermission.setRole(permission.getRole().name());
+
+        drive.permissions().create(fileId, newPermission).execute();
+    }
+
+    public void revokePermission(GoogleAuthorizationCodeFlow flow, String permissionId, String fileId) throws Exception {
+        Drive drive = getDrive(flow);
+        drive.permissions().delete(fileId, permissionId).execute();
     }
 
     private Drive getDrive(GoogleAuthorizationCodeFlow flow) throws IOException {

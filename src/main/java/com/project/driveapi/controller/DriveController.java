@@ -3,6 +3,7 @@ package com.project.driveapi.controller;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.project.driveapi.dto.*;
 import com.project.driveapi.service.DriveService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -67,23 +68,37 @@ public class DriveController {
         return driveService.getFile(flow, fileId);
     }
 
-    @DeleteMapping(value = "/files/delete")
+    @Operation(description = "Delete files completely")
+    @PostMapping(value = "/files/delete")
     public void deleteFiles(@RequestBody List<String> files) throws Exception {
         driveService.deleteFiles(flow, files);
     }
 
+    @Operation(description = "Add files to trash")
     @PostMapping(value = "/files/trash")
     public void trashFiles(@RequestBody List<String> files) throws Exception {
         driveService.trashFiles(flow, files);
     }
 
+    @Operation(description = "Remove files from trash")
     @PostMapping(value = "/files/untrash")
     public void untrashFiles(@RequestBody List<String> files) throws Exception {
         driveService.untrashFiles(flow, files);
     }
 
+    @Operation(description = "Delete all files from trash")
     @DeleteMapping(value = "/files/trash")
     public void emptyTrash() throws Exception {
         driveService.emptyTrash(flow);
+    }
+
+    @PostMapping(value = "/files/{fileId}/permission/add")
+    public void addPermission(@RequestBody PermissionDto permission, @PathVariable String fileId) throws Exception {
+        driveService.addPermission(flow, permission, fileId);
+    }
+
+    @PostMapping(value = "/files/{fileId}/permission/revoke/{permissionId}")
+    public void revokePermission(@PathVariable String permissionId, @PathVariable String fileId) throws Exception {
+        driveService.revokePermission(flow, permissionId, fileId);
     }
 }
