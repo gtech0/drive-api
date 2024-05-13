@@ -17,6 +17,7 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
 import com.project.driveapi.dto.*;
+import com.project.driveapi.entity.PermissionTypeEnum;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
@@ -36,7 +37,7 @@ public class DriveService {
     private final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private final Set<String> SCOPES = DriveScopes.all();
     private final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-    private final Tika tika;
+    private final Tika tika = new Tika();
 
     @Value("${google.oauth.callback.uri}")
     private String CALLBACK_URI;
@@ -53,8 +54,7 @@ public class DriveService {
     @Value("${google.user.id}")
     private String USER_IDENTIFIER_KEY;
 
-    public DriveService(Tika tika) throws GeneralSecurityException, IOException {
-        this.tika = tika;
+    public DriveService() throws GeneralSecurityException, IOException {
     }
 
     public GoogleAuthorizationCodeFlow getFlow() throws IOException {
@@ -71,16 +71,16 @@ public class DriveService {
                 .build();
     }
 
-    public void googleSignIn(HttpServletResponse response, GoogleAuthorizationCodeFlow flow) throws Exception {
-        GoogleAuthorizationCodeRequestUrl url = flow.newAuthorizationUrl();
+    public void googleSignIn(HttpServletResponse response) throws Exception {
+        GoogleAuthorizationCodeRequestUrl url = getFlow().newAuthorizationUrl();
         String redirectURL = url.setRedirectUri(CALLBACK_URI).setAccessType("offline").build();
         response.sendRedirect(redirectURL);
     }
 
-    public String saveAuthorizationCode(HttpServletRequest request,
-                                        GoogleAuthorizationCodeFlow flow) throws Exception {
+    public String saveAuthorizationCode(HttpServletRequest request) throws Exception {
         String code = request.getParameter("code");
         if (code != null) {
+            GoogleAuthorizationCodeFlow flow = getFlow();
             GoogleTokenResponse response = flow.newTokenRequest(code).setRedirectUri(CALLBACK_URI).execute();
             flow.createAndStoreCredential(response, USER_IDENTIFIER_KEY);
         }
@@ -88,11 +88,8 @@ public class DriveService {
         return "logged in";
     }
 
-    public List<String> uploadFiles(GoogleAuthorizationCodeFlow flow,
-                                    List<MultipartFile> multipartFiles,
+    public List<String> uploadFiles(List<MultipartFile> multipartFiles,
                                     String targetFolderId) throws Exception {
-        Drive drive = getDrive(flow);
-
         List<String> uploadedFilesIds = new ArrayList<>();
         for (MultipartFile multipartFile : multipartFiles) {
             java.io.File file = multipartFileToFile(multipartFile);
@@ -108,7 +105,7 @@ public class DriveService {
                 googleFile.setParents(Collections.singletonList(targetFolderId));
             }
 
-            File uploadedFile = drive
+            File uploadedFile = getDrive()
                     .files()
                     .create(googleFile, content)
                     .setFields("id")
@@ -121,22 +118,17 @@ public class DriveService {
         return uploadedFilesIds;
     }
 
-    public void downloadFiles(GoogleAuthorizationCodeFlow flow, Map<String, String> download) throws Exception {
-        Drive drive = getDrive(flow);
-
+    public void downloadFiles(Map<String, String> download) throws Exception {
         for (Map.Entry<String, String> file : download.entrySet()) {
             OutputStream fos = new FileOutputStream(file.getValue());
-            drive.files()
+            getDrive().files()
                     .get(file.getKey())
                     .executeMediaAndDownloadTo(fos);
             fos.close();
         }
     }
 
-    public String createFolder(GoogleAuthorizationCodeFlow flow,
-                               FolderDto folder) throws Exception {
-        Drive drive = getDrive(flow);
-
+    public String createFolder(FolderDto folder) throws Exception {
         File googleFile = new File();
         googleFile.setName(folder.getFolderName());
         googleFile.setMimeType("application/vnd.google-apps.folder");
@@ -144,7 +136,7 @@ public class DriveService {
             googleFile.setParents(Collections.singletonList(folder.getTargetFolderId()));
         }
 
-        File uploadedFile = drive
+        File uploadedFile = getDrive()
                 .files()
                 .create(googleFile)
                 .setFields("id")
@@ -152,14 +144,12 @@ public class DriveService {
         return String.format("fileID: '%s'", uploadedFile.getId());
     }
 
-    public List<GoogleFileDto> listFiles(GoogleAuthorizationCodeFlow flow) throws Exception {
-        Drive drive = getDrive(flow);
-
+    public List<GoogleFileDto> listFiles() throws Exception {
         List<GoogleFileDto> files = new ArrayList<>();
-        FileList googleFiles = drive
+        FileList googleFiles = getDrive()
                 .files()
                 .list()
-                .setFields("files(id,name,mimeType,createdTime,modifiedTime,permissionIds,trashed,size,parents)")
+                .setFields("files(id,name,mimeType,createdTime,modifiedTime,permissions,trashed,size,parents)")
                 .execute();
 
         for (File googleFile : googleFiles.getFiles()) {
@@ -169,7 +159,7 @@ public class DriveService {
                     .mimeType(googleFile.getMimeType())
                     .createdTime(unixToLocalDateTime(googleFile.getCreatedTime().getValue()))
                     .modifiedTime(unixToLocalDateTime(googleFile.getModifiedTime().getValue()))
-                    .permissionIds(googleFile.getPermissionIds())
+                    .permissions(googleFile.getPermissions())
                     .trashed(googleFile.getTrashed())
                     .size(googleFile.getSize())
                     .parents(googleFile.getParents())
@@ -178,10 +168,8 @@ public class DriveService {
         return files;
     }
 
-    public GoogleFileShortDto getFile(GoogleAuthorizationCodeFlow flow, String fileId) throws Exception {
-        Drive drive = getDrive(flow);
-
-        File googleFile = drive
+    public GoogleFileShortDto getFile(String fileId) throws Exception {
+        File googleFile = getDrive()
                 .files()
                 .get(fileId)
                 .execute();
@@ -193,56 +181,51 @@ public class DriveService {
                 .build();
     }
 
-    public void deleteFiles(GoogleAuthorizationCodeFlow flow, List<String> files) throws Exception {
-        Drive drive = getDrive(flow);
-
+    public void deleteFiles(List<String> files) throws Exception {
         for (String fileId : files) {
-            drive.files().delete(fileId).execute();
+            getDrive().files().delete(fileId).execute();
         }
     }
 
-    public void trashFiles(GoogleAuthorizationCodeFlow flow, List<String> files) throws Exception {
-        Drive drive = getDrive(flow);
-
+    public void trashFiles(List<String> files) throws Exception {
         for (String fileId : files) {
             File googleFile = new File();
             googleFile.setTrashed(true);
-            drive.files().update(fileId, googleFile).execute();
+            getDrive().files().update(fileId, googleFile).execute();
         }
     }
 
-    public void untrashFiles(GoogleAuthorizationCodeFlow flow, List<String> files) throws Exception {
-        Drive drive = getDrive(flow);
-
+    public void untrashFiles(List<String> files) throws Exception {
         for (String fileId : files) {
             File googleFile = new File();
             googleFile.setTrashed(false);
-            drive.files().update(fileId, googleFile).execute();
+            getDrive().files().update(fileId, googleFile).execute();
         }
     }
 
-    public void emptyTrash(GoogleAuthorizationCodeFlow flow) throws Exception {
-        Drive drive = getDrive(flow);
-        drive.files().emptyTrash().execute();
+    public void emptyTrash() throws Exception {
+        getDrive().files().emptyTrash().execute();
     }
 
-    public void addPermission(GoogleAuthorizationCodeFlow flow, PermissionDto permission, String fileId) throws Exception {
-        Drive drive = getDrive(flow);
-
+    public void addPermission(PermissionDto permission, String fileId) throws Exception {
         Permission newPermission = new Permission();
         newPermission.setType(permission.getType().name());
         newPermission.setRole(permission.getRole().name());
+        if (permission.getType() == PermissionTypeEnum.user || permission.getType() == PermissionTypeEnum.group) {
+            newPermission.setEmailAddress(permission.getEmailAddressOrDomain());
+        } else if (permission.getType() == PermissionTypeEnum.domain) {
+            newPermission.setDomain(permission.getEmailAddressOrDomain());
+        }
 
-        drive.permissions().create(fileId, newPermission).execute();
+        getDrive().permissions().create(fileId, newPermission).execute();
     }
 
-    public void revokePermission(GoogleAuthorizationCodeFlow flow, String permissionId, String fileId) throws Exception {
-        Drive drive = getDrive(flow);
-        drive.permissions().delete(fileId, permissionId).execute();
+    public void revokePermission(String permissionId, String fileId) throws Exception {
+        getDrive().permissions().delete(fileId, permissionId).execute();
     }
 
-    private Drive getDrive(GoogleAuthorizationCodeFlow flow) throws IOException {
-        Credential credentials = flow.loadCredential(USER_IDENTIFIER_KEY);
+    private Drive getDrive() throws IOException {
+        Credential credentials = getFlow().loadCredential(USER_IDENTIFIER_KEY);
         return new Drive
                 .Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
                 .setApplicationName(APPLICATION_NAME)

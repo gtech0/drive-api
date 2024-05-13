@@ -7,8 +7,10 @@ import lombok.Data;
 @Data
 public class PermissionDto {
 
+    private PermissionRoleEnum role;
+
     private PermissionTypeEnum type;
 
-    private PermissionRoleEnum role;
+    private String emailAddressOrDomain;
 
 }

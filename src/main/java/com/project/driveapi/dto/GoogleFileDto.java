@@ -1,5 +1,6 @@
 package com.project.driveapi.dto;
 
+import com.google.api.services.drive.model.Permission;
 import lombok.Builder;
 import lombok.Data;
 
@@ -21,7 +22,7 @@ public class GoogleFileDto implements Serializable {
 
     private LocalDateTime modifiedTime;
 
-    private List<String> permissionIds;
+    private List<Permission> permissions;
 
     private boolean trashed;
 
