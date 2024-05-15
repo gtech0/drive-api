@@ -27,15 +27,13 @@ public class AuthService {
         response.sendRedirect(redirectURL);
     }
 
-    public String saveAuthorizationCode(HttpServletRequest request) throws Exception {
+    public void saveAuthorizationCode(HttpServletRequest request) throws Exception {
         String code = request.getParameter("code");
         if (code != null) {
             GoogleAuthorizationCodeFlow flow = commonService.getFlow();
             GoogleTokenResponse response = flow.newTokenRequest(code).setRedirectUri(CALLBACK_URI).execute();
             flow.createAndStoreCredential(response, USER_IDENTIFIER_KEY);
         }
-
-        return "logged in";
     }
 
 }

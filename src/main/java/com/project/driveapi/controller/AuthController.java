@@ -20,8 +20,8 @@ public class AuthController {
     }
 
     @GetMapping(value = "/oauth")
-    public String saveAuthorizationCode(HttpServletRequest request) throws Exception {
-        return authService.saveAuthorizationCode(request);
+    public void saveAuthorizationCode(HttpServletRequest request) throws Exception {
+        authService.saveAuthorizationCode(request);
     }
 
 }
