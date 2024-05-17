@@ -18,7 +18,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.TimeZone;
 
 @Service
 public class CommonService {
@@ -42,7 +45,7 @@ public class CommonService {
     public CommonService() throws GeneralSecurityException, IOException {
     }
 
-    public GoogleAuthorizationCodeFlow getFlow() throws IOException {
+    protected GoogleAuthorizationCodeFlow getFlow() throws IOException {
         InputStream in = FileService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
@@ -56,7 +59,7 @@ public class CommonService {
                 .build();
     }
 
-    Drive getDrive() throws IOException {
+    protected Drive getDrive() throws IOException {
         Credential credentials = getFlow().loadCredential(USER_IDENTIFIER_KEY);
         return new Drive
                 .Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
@@ -64,4 +67,9 @@ public class CommonService {
                 .build();
     }
 
+    protected LocalDateTime unixToLocalDateTime(Long unixTime) {
+        return LocalDateTime
+                .ofInstant(Instant
+                        .ofEpochMilli(unixTime), TimeZone.getDefault().toZoneId());
+    }
 }
