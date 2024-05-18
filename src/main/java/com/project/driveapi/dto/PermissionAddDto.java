@@ -5,7 +5,7 @@ import com.project.driveapi.entity.PermissionTypeEnum;
 import lombok.Data;
 
 @Data
-public class PermissionDto {
+public class PermissionAddDto {
 
     private PermissionRoleEnum role;
 

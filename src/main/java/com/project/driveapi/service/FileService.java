@@ -3,9 +3,7 @@ package com.project.driveapi.service;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-import com.project.driveapi.dto.FolderDto;
-import com.project.driveapi.dto.GoogleFileDto;
-import com.project.driveapi.dto.GoogleFileShortDto;
+import com.project.driveapi.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.apache.tika.Tika;
@@ -108,13 +106,39 @@ public class FileService {
                     .mimeType(googleFile.getMimeType())
                     .createdTime(commonService.unixToLocalDateTime(googleFile.getCreatedTime().getValue()))
                     .modifiedTime(commonService.unixToLocalDateTime(googleFile.getModifiedTime().getValue()))
-                    .permissions(googleFile.getPermissions())
+                    .permissions(mapPermissions(googleFile)
+                    )
                     .trashed(googleFile.getTrashed())
                     .size(googleFile.getSize())
                     .parents(googleFile.getParents())
                     .build());
         }
         return files;
+    }
+
+    private static List<Object> mapPermissions(File googleFile) {
+        return googleFile.getPermissions()
+                .stream()
+                .map(
+                        permission -> {
+                            if (Objects.equals(permission.getId(), "anyoneWithLink")) {
+                                return PermissionGetAnyoneDto.builder()
+                                        .id(permission.getId())
+                                        .role(permission.getRole())
+                                        .type(permission.getType())
+                                        .build();
+                            } else {
+                                return PermissionGetDto.builder()
+                                        .id(permission.getId())
+                                        .role(permission.getRole())
+                                        .type(permission.getType())
+                                        .displayName(permission.getDisplayName())
+                                        .emailAddress(permission.getEmailAddress())
+                                        .photoLink(permission.getPhotoLink())
+                                        .build();
+                            }
+                        }
+                ).toList();
     }
 
     public GoogleFileShortDto getFile(String fileId) throws Exception {
@@ -140,17 +164,17 @@ public class FileService {
     }
 
     private java.io.File multipartFileToFile(MultipartFile multipartFile) throws IOException {
-        java.io.File convFile = new java.io.File(Objects.requireNonNull(multipartFile.getOriginalFilename()));
-        FileOutputStream fos = new FileOutputStream(convFile);
+        java.io.File file = new java.io.File(Objects.requireNonNull(multipartFile.getOriginalFilename()));
+        FileOutputStream fos = new FileOutputStream(file);
         fos.write(multipartFile.getBytes());
         fos.close();
 
-        return convFile;
+        return file;
     }
 
     private String getMimeType(String fileName) {
-        String extensionType = tika.detect(fileName);
-        System.out.println(extensionType);
-        return extensionType;
+        String mimeType = tika.detect(fileName);
+        System.out.println(mimeType);
+        return mimeType;
     }
 }
