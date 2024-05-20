@@ -6,7 +6,9 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "path")
+@Table(name = "path", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"path", "sync_id"})
+})
 @Getter
 @Setter
 @Builder

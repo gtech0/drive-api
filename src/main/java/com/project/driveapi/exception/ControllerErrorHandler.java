@@ -1,4 +1,4 @@
-package com.project.driveapi.controller;
+package com.project.driveapi.exception;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.project.driveapi.dto.ErrorResponse;
@@ -9,6 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Date;
 
 @RestControllerAdvice
@@ -28,5 +30,23 @@ public class ControllerErrorHandler {
     public ResponseEntity<Object> handleGoogleJsonResponseException(GoogleJsonResponseException ex) {
         ErrorResponse errorResponse = new ErrorResponse(new Date(), ex.getStatusCode(), ex.getDetails().getMessage());
         return ResponseEntity.status(ex.getStatusCode()).body(errorResponse);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<Object> handleIOException(IOException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST.value()).body(errorResponse);
+    }
+
+    @ExceptionHandler(SQLException.class)
+    public ResponseEntity<Object> handleSQLException(SQLException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(errorResponse);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Object> handleNotFoundException(NotFoundException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.NOT_FOUND.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND.value()).body(errorResponse);
     }
 }

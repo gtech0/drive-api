@@ -17,7 +17,7 @@ public class ClientSyncEntity {
     @Id
     private String clientId;
 
-    @OneToMany(mappedBy = "sync")
+    @OneToMany(mappedBy = "sync", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PathEntity> paths;
 
 }
