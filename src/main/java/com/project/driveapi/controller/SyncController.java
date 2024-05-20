@@ -29,10 +29,4 @@ public class SyncController {
     public SyncGetDto listPaths() throws IOException {
         return syncService.listPaths();
     }
-
-//    @PostMapping(value = "/sync/start")
-//    public void watch() throws IOException, InterruptedException {
-//        syncService.watch();
-//    }
-
 }

@@ -1,5 +1,6 @@
 package com.project.driveapi.service;
 
+import com.project.driveapi.component.CustomFileAlterationListener;
 import com.project.driveapi.dto.SyncChangeDto;
 import com.project.driveapi.dto.SyncGetDto;
 import com.project.driveapi.entity.ClientSyncEntity;
@@ -7,16 +8,17 @@ import com.project.driveapi.entity.PathEntity;
 import com.project.driveapi.exception.NotFoundException;
 import com.project.driveapi.repository.ClientSyncRepository;
 import com.project.driveapi.repository.PathRepository;
-import org.springframework.scheduling.annotation.Scheduled;
+import jakarta.annotation.PostConstruct;
+import org.apache.commons.io.monitor.FileAlterationListener;
+import org.apache.commons.io.monitor.FileAlterationMonitor;
+import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-
-import static java.nio.file.StandardWatchEventKinds.*;
 
 @Component
 public class SyncService {
@@ -24,11 +26,11 @@ public class SyncService {
     private final ClientSyncRepository syncRepository;
     private final PathRepository pathRepository;
     private final CommonService commonService;
-    private final WatchService watchService = FileSystems.getDefault().newWatchService();
+    private final long POLLING_INTERVAL = 1500;
 
     public SyncService(ClientSyncRepository syncRepository,
                        PathRepository pathRepository,
-                       CommonService commonService) throws IOException {
+                       CommonService commonService) {
         this.syncRepository = syncRepository;
         this.pathRepository = pathRepository;
         this.commonService = commonService;
@@ -89,51 +91,25 @@ public class SyncService {
                 .build();
     }
 
-    @Scheduled(initialDelay = 2000, fixedRate = 4000)
-    protected void scheduled() {
-        Thread thread = new Thread(
-                () -> {
-                    try {
-                        watch();
-                    } catch (IOException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-        );
-        thread.start();
-    }
+    @PostConstruct
+    private void monitor() throws Exception {
+        FileAlterationMonitor monitor = new FileAlterationMonitor(POLLING_INTERVAL);
 
-    //@Scheduled(initialDelay = 2000, fixedDelay = 2000)
-    private void watch() throws IOException, InterruptedException {
         String clientId = commonService.getFlow().getClientId();
         List<PathEntity> pathEntities = pathRepository.findBySyncClientId(clientId);
-
-        List<Path> paths = new ArrayList<>();
         for (PathEntity pathEntity : pathEntities) {
-            paths.add(Path.of(pathEntity.getPath()));
-        }
-        registerRecursive(paths);
-
-        WatchKey key;
-        while ((key = watchService.take()) != null) {
-            for (WatchEvent<?> event : key.pollEvents()) {
-                System.out.println("Event kind:" + event.kind()
-                        + ". File affected: "
-                        + event.context() + ".");
+            String path = pathEntity.getPath();
+            File directory = new File(path);
+            if (!directory.exists()) {
+                throw new RuntimeException("Directory not found: " + directory);
             }
-            key.reset();
-        }
-    }
 
-    private void registerRecursive(List<Path> paths) throws IOException {
-        for (Path path : paths) {
-            Files.walkFileTree(path, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            FileAlterationObserver observer = new FileAlterationObserver(directory);
+            FileAlterationListener listener = new CustomFileAlterationListener(Path.of(path));
+            observer.addListener(listener);
+            monitor.addObserver(observer);
         }
+
+        monitor.start();
     }
 }
