@@ -59,7 +59,7 @@ public class CommonService {
                 .build();
     }
 
-    protected Drive getDrive() throws IOException {
+    public Drive getDrive() throws IOException {
         Credential credentials = getFlow().loadCredential(USER_IDENTIFIER_KEY);
         return new Drive
                 .Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)

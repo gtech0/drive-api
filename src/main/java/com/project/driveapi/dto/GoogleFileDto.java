@@ -27,6 +27,8 @@ public class GoogleFileDto implements Serializable {
 
     private Long size;
 
+    private String md5Checksum;
+
     private List<String> parents;
 
 }
