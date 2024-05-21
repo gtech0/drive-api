@@ -6,7 +6,6 @@ import com.google.api.services.drive.model.FileList;
 import com.project.driveapi.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FileUtils;
-import org.apache.tika.Tika;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,8 +17,6 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class FileService {
-    private final Tika tika = new Tika();
-
     private final CommonService commonService;
 
     public void uploadFiles(List<MultipartFile> multipartFiles,
@@ -28,7 +25,7 @@ public class FileService {
             java.io.File file = multipartFileToFile(multipartFile);
 
             String fileName = multipartFile.getOriginalFilename();
-            String fileMimeType = getMimeType(fileName);
+            String fileMimeType = commonService.getMimeType(fileName);
 
             FileContent content = new FileContent(fileMimeType, file);
 
@@ -54,6 +51,7 @@ public class FileService {
             commonService.getDrive()
                     .files()
                     .get(file.getKey())
+                    .setAlt("media")
                     .executeMediaAndDownloadTo(fos);
             fos.close();
         }
@@ -78,7 +76,7 @@ public class FileService {
         java.io.File file = multipartFileToFile(multipartFile);
 
         String fileName = multipartFile.getOriginalFilename();
-        String fileMimeType = getMimeType(fileName);
+        String fileMimeType = commonService.getMimeType(fileName);
 
         FileContent content = new FileContent(fileMimeType, file);
 
@@ -169,11 +167,5 @@ public class FileService {
         fos.close();
 
         return file;
-    }
-
-    private String getMimeType(String fileName) {
-        String mimeType = tika.detect(fileName);
-        System.out.println(mimeType);
-        return mimeType;
     }
 }

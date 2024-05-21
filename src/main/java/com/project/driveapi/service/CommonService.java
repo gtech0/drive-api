@@ -10,6 +10,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ public class CommonService {
     private final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private final Set<String> SCOPES = DriveScopes.all();
     private final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+    private final Tika tika = new Tika();
 
     @Value("${google.secret key.path}")
     private String CREDENTIALS_FILE_PATH;
@@ -65,6 +67,12 @@ public class CommonService {
                 .Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+    }
+
+    public String getMimeType(String fileName) {
+        String mimeType = tika.detect(fileName);
+        System.out.println(mimeType);
+        return mimeType;
     }
 
     protected LocalDateTime unixToLocalDateTime(Long unixTime) {

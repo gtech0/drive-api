@@ -49,4 +49,10 @@ public class ControllerErrorHandler {
         ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.NOT_FOUND.value(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND.value()).body(errorResponse);
     }
+
+    @ExceptionHandler(DuplicateFileException.class)
+    public ResponseEntity<Object> handleDuplicateFileException(DuplicateFileException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.CONFLICT.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT.value()).body(errorResponse);
+    }
 }

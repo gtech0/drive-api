@@ -1,11 +1,15 @@
 package com.project.driveapi.component;
 
+import com.google.api.client.http.FileContent;
+import com.project.driveapi.exception.DuplicateFileException;
 import com.project.driveapi.exception.NotFoundException;
 import com.project.driveapi.service.CommonService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -130,7 +134,69 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
     @SneakyThrows
     @Override
     public void onFileCreate(File file) {
-        System.out.println("File created: " + file.getCanonicalPath());
+        try {
+            Path filePath = path.normalize().relativize(file.toPath()).getFileName();
+            Path parentPath = Path.of(file.getCanonicalPath()).getParent();
+
+            System.out.println("File created: " + file.getCanonicalPath());
+            System.out.println("File root name: " + path.getFileName());
+            System.out.println("File name: " + filePath);
+            System.out.println("File parent: " + Path.of(file.getCanonicalPath()).getParent());
+
+            List<com.google.api.services.drive.model.File> files = commonService.getDrive()
+                    .files()
+                    .list()
+                    .setFields("files(id,name,mimeType,trashed,md5Checksum,parents)")
+                    .execute()
+                    .getFiles();
+
+            String md5Checksum;
+            try (InputStream is = Files.newInputStream(file.toPath())) {
+                md5Checksum = org.apache.commons.codec.digest.DigestUtils.md5Hex(is);
+            }
+
+            String parentId = null;
+            for (com.google.api.services.drive.model.File googlefile : files) {
+                if (Objects.equals(googlefile.getMimeType(), "application/vnd.google-apps.folder")
+                        && Objects.equals(googlefile.getName(), parentPath.getFileName().toString())
+                        && !googlefile.getTrashed()
+                ) {
+                    parentId = googlefile.getId();
+                    break;
+                }
+            }
+
+            for (com.google.api.services.drive.model.File googlefile : files) {
+                if (googlefile.getParents().contains(parentId)
+                        && Objects.equals(googlefile.getName(), file.toPath().getFileName().toString())
+                        && Objects.equals(googlefile.getMd5Checksum(), md5Checksum)
+                        && !googlefile.getTrashed()
+                ) {
+                    throw new DuplicateFileException("Duplicate file");
+                }
+            }
+
+            if (parentId == null) {
+                throw new NotFoundException("Parent folder not found");
+            }
+
+            String fileName = filePath.toString();
+            String fileMimeType = commonService.getMimeType(fileName);
+
+            FileContent content = new FileContent(fileMimeType, file);
+
+            com.google.api.services.drive.model.File googleFile = new com.google.api.services.drive.model.File();
+            googleFile.setName(fileName);
+            googleFile.setParents(Collections.singletonList(parentId));
+
+            commonService.getDrive()
+                    .files()
+                    .create(googleFile, content)
+                    .setFields("id")
+                    .execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @SneakyThrows

@@ -8,10 +8,10 @@ import com.project.driveapi.entity.PathEntity;
 import com.project.driveapi.exception.NotFoundException;
 import com.project.driveapi.repository.ClientSyncRepository;
 import com.project.driveapi.repository.PathRepository;
+import jakarta.annotation.PostConstruct;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,7 +91,7 @@ public class SyncService {
                 .build();
     }
 
-    @Scheduled(fixedDelay = Long.MAX_VALUE)
+    @PostConstruct
     public void monitor() throws Exception {
         FileAlterationMonitor monitor = new FileAlterationMonitor(POLLING_INTERVAL);
 
