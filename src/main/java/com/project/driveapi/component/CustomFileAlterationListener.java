@@ -5,6 +5,7 @@ import com.project.driveapi.exception.DuplicateFileException;
 import com.project.driveapi.exception.NotFoundException;
 import com.project.driveapi.service.CommonService;
 import lombok.SneakyThrows;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 
 import java.io.File;
@@ -152,7 +153,7 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
 
             String md5Checksum;
             try (InputStream is = Files.newInputStream(file.toPath())) {
-                md5Checksum = org.apache.commons.codec.digest.DigestUtils.md5Hex(is);
+                md5Checksum = DigestUtils.md5Hex(is);
             }
 
             String parentId = null;
@@ -176,7 +177,18 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                 }
             }
 
-            if (parentId == null) {
+            if (parentId == null && path.getFileName().toString().equals(parentPath.getFileName().toString())) {
+                com.google.api.services.drive.model.File googleFile = new com.google.api.services.drive.model.File();
+                googleFile.setName(path.getFileName().toString());
+                googleFile.setMimeType("application/vnd.google-apps.folder");
+
+                parentId = commonService.getDrive()
+                        .files()
+                        .create(googleFile)
+                        .setFields("id")
+                        .execute()
+                        .getId();
+            } else if (parentId == null) {
                 throw new NotFoundException("Parent folder not found");
             }
 
@@ -208,6 +220,55 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
     @SneakyThrows
     @Override
     public void onFileDelete(File file) {
-        System.out.println("File removed: " + file.getCanonicalPath());
+        try {
+            Path filePath = path.normalize().relativize(file.toPath()).getFileName();
+            Path parentPath = Path.of(file.getCanonicalPath()).getParent();
+
+            System.out.println("File deleted: " + file.getCanonicalPath());
+            System.out.println("File root name: " + path.getFileName());
+            System.out.println("File name: " + filePath);
+            System.out.println("File parent: " + Path.of(file.getCanonicalPath()).getParent());
+
+            List<com.google.api.services.drive.model.File> files = commonService.getDrive()
+                    .files()
+                    .list()
+                    .setFields("files(id,name,mimeType,trashed,md5Checksum,parents)")
+                    .execute()
+                    .getFiles();
+
+            String parentId = null;
+            for (com.google.api.services.drive.model.File googlefile : files) {
+                if (Objects.equals(googlefile.getMimeType(), "application/vnd.google-apps.folder")
+                        && Objects.equals(googlefile.getName(), parentPath.getFileName().toString())
+                        && !googlefile.getTrashed()
+                ) {
+                    parentId = googlefile.getId();
+                    break;
+                }
+            }
+
+            String fileId = null;
+            for (com.google.api.services.drive.model.File googlefile : files) {
+                if (googlefile.getParents().contains(parentId)
+                        && Objects.equals(googlefile.getName(), file.toPath().getFileName().toString())
+                        && !googlefile.getTrashed()
+                ) {
+                    fileId = googlefile.getId();
+                    break;
+                }
+            }
+
+            if (fileId == null) {
+                throw new NotFoundException("File not found");
+            }
+
+            commonService.getDrive()
+                    .files()
+                    .delete(fileId)
+                    .setFields("id")
+                    .execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
