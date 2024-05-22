@@ -5,6 +5,7 @@ import com.project.driveapi.dto.SyncChangeDto;
 import com.project.driveapi.dto.SyncGetDto;
 import com.project.driveapi.entity.ClientSyncEntity;
 import com.project.driveapi.entity.PathEntity;
+import com.project.driveapi.exception.ControllerErrorHandler;
 import com.project.driveapi.exception.NotFoundException;
 import com.project.driveapi.repository.ClientSyncRepository;
 import com.project.driveapi.repository.PathRepository;
@@ -105,7 +106,7 @@ public class SyncService {
             }
 
             FileAlterationObserver observer = new FileAlterationObserver(directory);
-            FileAlterationListener listener = new CustomFileAlterationListener(Path.of(path), commonService);
+            FileAlterationListener listener = new CustomFileAlterationListener(Path.of(path), commonService, new ControllerErrorHandler());
             observer.addListener(listener);
             monitor.addObserver(observer);
         }

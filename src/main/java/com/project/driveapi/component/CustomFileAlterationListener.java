@@ -1,9 +1,11 @@
 package com.project.driveapi.component;
 
 import com.google.api.client.http.FileContent;
+import com.project.driveapi.exception.ControllerErrorHandler;
 import com.project.driveapi.exception.DuplicateFileException;
 import com.project.driveapi.exception.NotFoundException;
 import com.project.driveapi.service.CommonService;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
@@ -17,14 +19,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+@RequiredArgsConstructor
 public class CustomFileAlterationListener extends FileAlterationListenerAdaptor {
+
     private final Path path;
     private final CommonService commonService;
-
-    public CustomFileAlterationListener(Path path, CommonService commonService) {
-        this.path = path;
-        this.commonService = commonService;
-    }
+    private final ControllerErrorHandler errorHandler;
 
     @Override
     public void onDirectoryCreate(File directory) {
@@ -62,7 +62,7 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .setFields("id")
                     .execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            errorHandler.handleUnknownException(e);
         }
     }
 
@@ -99,7 +99,7 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .setFields("id")
                     .execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            errorHandler.handleUnknownException(e);
         }
     }
 
@@ -151,7 +151,7 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .setFields("id")
                     .execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            errorHandler.handleUnknownException(e);
         }
     }
 
@@ -204,7 +204,7 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .setFields("id")
                     .execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            errorHandler.handleUnknownException(e);
         }
     }
 
@@ -231,7 +231,7 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .setFields("id")
                     .execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            errorHandler.handleUnknownException(e);
         }
     }
 
