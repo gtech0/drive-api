@@ -102,11 +102,15 @@ public class SyncService {
             String path = pathEntity.getPath();
             File directory = new File(path);
             if (!directory.exists()) {
-                throw new RuntimeException("Directory not found: " + directory);
+                throw new NotFoundException("Directory not found: " + directory);
             }
 
             FileAlterationObserver observer = new FileAlterationObserver(directory);
-            FileAlterationListener listener = new CustomFileAlterationListener(Path.of(path), commonService, new ControllerErrorHandler());
+            FileAlterationListener listener = new CustomFileAlterationListener(
+                    Path.of(path),
+                    commonService,
+                    new ControllerErrorHandler()
+            );
             observer.addListener(listener);
             monitor.addObserver(observer);
         }
