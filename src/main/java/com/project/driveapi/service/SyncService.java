@@ -44,6 +44,7 @@ public class SyncService {
                 .findById(clientId)
                 .orElseGet(() -> ClientSyncEntity.builder()
                         .clientId(clientId)
+                        .paths(new ArrayList<>())
                         .build());
 
         String path = syncPath.getPath();
@@ -57,6 +58,7 @@ public class SyncService {
                 .sync(syncEntity)
                 .build();
 
+        //List<PathEntity> paths = Collections.singletonList(pathEntity);
         syncEntity.getPaths().add(pathEntity);
         syncRepository.save(syncEntity);
     }

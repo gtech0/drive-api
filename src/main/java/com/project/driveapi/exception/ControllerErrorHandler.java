@@ -56,9 +56,9 @@ public class ControllerErrorHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT.value()).body(errorResponse);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleUnknownException(Exception ex) {
-        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(errorResponse);
-    }
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<Object> handleUnknownException(Exception ex) {
+//        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(errorResponse);
+//    }
 }

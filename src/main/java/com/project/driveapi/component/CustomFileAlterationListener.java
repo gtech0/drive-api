@@ -61,8 +61,8 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .create(googleFile)
                     .setFields("id")
                     .execute();
-        } catch (Exception e) {
-            errorHandler.handleUnknownException(e);
+        } catch (IOException e) {
+            errorHandler.handleIOException(e);
         }
     }
 
@@ -98,8 +98,8 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .delete(dirId)
                     .setFields("id")
                     .execute();
-        } catch (Exception e) {
-            errorHandler.handleUnknownException(e);
+        } catch (IOException e) {
+            errorHandler.handleIOException(e);
         }
     }
 
@@ -150,8 +150,8 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .create(googleFile, content)
                     .setFields("id")
                     .execute();
-        } catch (Exception e) {
-            errorHandler.handleUnknownException(e);
+        } catch (IOException e) {
+            errorHandler.handleIOException(e);
         }
     }
 
@@ -203,8 +203,8 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .update(fileId, googleFile, content)
                     .setFields("id")
                     .execute();
-        } catch (Exception e) {
-            errorHandler.handleUnknownException(e);
+        } catch (IOException e) {
+            errorHandler.handleIOException(e);
         }
     }
 
@@ -230,8 +230,8 @@ public class CustomFileAlterationListener extends FileAlterationListenerAdaptor 
                     .delete(fileId)
                     .setFields("id")
                     .execute();
-        } catch (Exception e) {
-            errorHandler.handleUnknownException(e);
+        } catch (IOException e) {
+            errorHandler.handleIOException(e);
         }
     }
 
