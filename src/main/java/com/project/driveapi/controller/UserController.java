@@ -24,8 +24,8 @@ public class UserController {
     }
 
     @GetMapping(value = "/oauth")
-    public void saveAuthorizationCode(HttpServletRequest request) throws Exception {
-        userService.saveAuthorizationCode(request);
+    public void saveAuthorizationCode(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        userService.saveAuthorizationCode(request, response);
     }
 
     @GetMapping(value = "/about")

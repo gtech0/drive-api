@@ -23,6 +23,9 @@ public class UserService {
     @Value("${google.user.id}")
     private String USER_IDENTIFIER_KEY;
 
+    @Value("${urls.main-page}")
+    private String URL_MAIN_PAGE;
+
     private final CommonService commonService;
 
     public void googleSignIn(HttpServletResponse response) throws Exception {
@@ -31,13 +34,14 @@ public class UserService {
         response.sendRedirect(redirectURL);
     }
 
-    public void saveAuthorizationCode(HttpServletRequest request) throws Exception {
+    public void saveAuthorizationCode(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String code = request.getParameter("code");
         if (code != null) {
             GoogleAuthorizationCodeFlow flow = commonService.getFlow();
-            GoogleTokenResponse response = flow.newTokenRequest(code).setRedirectUri(CALLBACK_URI).execute();
-            flow.createAndStoreCredential(response, USER_IDENTIFIER_KEY);
+            GoogleTokenResponse googleResponse = flow.newTokenRequest(code).setRedirectUri(CALLBACK_URI).execute();
+            flow.createAndStoreCredential(googleResponse, USER_IDENTIFIER_KEY);
         }
+        response.sendRedirect(URL_MAIN_PAGE);
     }
 
     public AboutDto getAboutInfo() throws IOException {
