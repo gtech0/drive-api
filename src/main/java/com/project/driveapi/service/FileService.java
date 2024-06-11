@@ -114,6 +114,10 @@ public class FileService {
     }
 
     private static List<Object> mapPermissions(File googleFile) {
+        if (googleFile.getPermissions() == null) {
+            return null;
+        }
+
         return googleFile.getPermissions()
                 .stream()
                 .map(
