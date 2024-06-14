@@ -9,9 +9,9 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.*;
 
 @Service
@@ -45,16 +45,13 @@ public class FileService {
         }
     }
 
-    public void downloadFiles(Map<String, String> download) throws Exception {
-        for (Map.Entry<String, String> file : download.entrySet()) {
-            OutputStream fos = new FileOutputStream(file.getValue());
-            commonService.getDrive()
-                    .files()
-                    .get(file.getKey())
-                    .setAlt("media")
-                    .executeMediaAndDownloadTo(fos);
-            fos.close();
-        }
+    public byte[] downloadFile(String fileId) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        commonService.getDrive()
+                .files()
+                .get(fileId)
+                .executeMediaAndDownloadTo(baos);
+        return baos.toByteArray();
     }
 
     public void createFolder(FolderDto folder) throws Exception {

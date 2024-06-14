@@ -5,14 +5,12 @@ import com.project.driveapi.dto.GoogleFileDto;
 import com.project.driveapi.dto.GoogleFileShortDto;
 import com.project.driveapi.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -30,11 +28,10 @@ public class FileController {
         fileService.uploadFiles(multipartFiles, targetFolderId);
     }
 
-    @Operation(description = "Download selected files")
-    @GetMapping(value = "/files/download")
-    public void downloadFiles(@Parameter(example = "{ \"fileId1\": \"absolutePath1\", \"fileId2\": \"absolutePath2\" }")
-                              @RequestBody Map<String, String> download) throws Exception {
-        fileService.downloadFiles(download);
+    @Operation(description = "Download selected file")
+    @GetMapping(value = "/files/download/{fileId}")
+    public byte[] downloadFile(@PathVariable String fileId) throws Exception {
+        return fileService.downloadFile(fileId);
     }
 
     @Operation(description = "Create folder")
