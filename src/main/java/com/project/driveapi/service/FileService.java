@@ -6,6 +6,11 @@ import com.google.api.services.drive.model.FileList;
 import com.project.driveapi.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FileUtils;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -45,13 +50,24 @@ public class FileService {
         }
     }
 
-    public byte[] downloadFile(String fileId) throws Exception {
+    public ResponseEntity<Resource> downloadFile(String fileId) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         commonService.getDrive()
                 .files()
                 .get(fileId)
                 .executeMediaAndDownloadTo(baos);
-        return baos.toByteArray();
+
+        GoogleFileShortDto file = getFile(fileId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
+
+        ByteArrayResource resource = new ByteArrayResource(baos.toByteArray());
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(baos.size())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
     public void createFolder(FolderDto folder) throws Exception {

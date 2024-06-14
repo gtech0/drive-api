@@ -6,6 +6,8 @@ import com.project.driveapi.dto.GoogleFileShortDto;
 import com.project.driveapi.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,7 +32,7 @@ public class FileController {
 
     @Operation(description = "Download selected file")
     @GetMapping(value = "/files/download/{fileId}")
-    public byte[] downloadFile(@PathVariable String fileId) throws Exception {
+    public ResponseEntity<Resource> downloadFile(@PathVariable String fileId) throws Exception {
         return fileService.downloadFile(fileId);
     }
 
