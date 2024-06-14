@@ -57,7 +57,7 @@ public class FileController {
     }
 
     @Operation(description = "Get basic info about file")
-    @GetMapping(value = "/files/get/{fileId}")
+    @GetMapping(value = "/files/get/{fileId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public GoogleFileShortDto getFile(@PathVariable String fileId) throws Exception {
         return fileService.getFile(fileId);
     }

@@ -53,27 +53,6 @@ public class FileService {
         }
     }
 
-//    public ResponseEntity<Resource> downloadFile(String fileId) throws Exception {
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        GoogleFileShortDto file = getFile(fileId);
-//
-//        commonService.getDrive()
-//                .files()
-//                .get(fileId)
-//                .setAlt("media")
-//                .executeMediaAndDownloadTo(baos);
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
-//
-//        ByteArrayResource resource = new ByteArrayResource(baos.toByteArray());
-//        return ResponseEntity.ok()
-//                .headers(headers)
-//                .contentLength(baos.size())
-//                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-//                .body(resource);
-//    }
-
     public ResponseEntity<Resource> downloadFile(String fileId) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         GoogleFileShortDto file = getFile(fileId);
@@ -221,12 +200,14 @@ public class FileService {
         File googleFile = commonService.getDrive()
                 .files()
                 .get(fileId)
+                .setFields("id,name,mimeType,parents")
                 .execute();
 
         return GoogleFileShortDto.builder()
                 .id(googleFile.getId())
                 .name(googleFile.getName())
                 .mimeType(googleFile.getMimeType())
+                .parents(googleFile.getParents())
                 .build();
     }
 
