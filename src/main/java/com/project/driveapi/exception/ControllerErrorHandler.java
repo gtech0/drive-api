@@ -56,6 +56,12 @@ public class ControllerErrorHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT.value()).body(errorResponse);
     }
 
+    @ExceptionHandler(FileNotExportableException.class)
+    public ResponseEntity<Object> handleFileNotExportableException(FileNotExportableException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.CONFLICT.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT.value()).body(errorResponse);
+    }
+
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<Object> handleUnknownException(Exception ex) {
 //        ErrorResponse errorResponse = new ErrorResponse(new Date(), HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());

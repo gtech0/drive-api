@@ -4,8 +4,11 @@ import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.project.driveapi.dto.*;
+import com.project.driveapi.exception.FileNotExportableException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -50,17 +53,61 @@ public class FileService {
         }
     }
 
+//    public ResponseEntity<Resource> downloadFile(String fileId) throws Exception {
+//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        GoogleFileShortDto file = getFile(fileId);
+//
+//        commonService.getDrive()
+//                .files()
+//                .get(fileId)
+//                .setAlt("media")
+//                .executeMediaAndDownloadTo(baos);
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
+//
+//        ByteArrayResource resource = new ByteArrayResource(baos.toByteArray());
+//        return ResponseEntity.ok()
+//                .headers(headers)
+//                .contentLength(baos.size())
+//                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+//                .body(resource);
+//    }
+
     public ResponseEntity<Resource> downloadFile(String fileId) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        commonService.getDrive()
-                .files()
-                .get(fileId)
-                .executeMediaAndDownloadTo(baos);
-
         GoogleFileShortDto file = getFile(fileId);
 
+        List<String> googleMimeTypes = List.of(
+                "application/vnd.google-apps.document",
+                "application/vnd.google-apps.presentation",
+                "application/vnd.google-apps.spreadsheet",
+                "application/vnd.google-apps.drawing",
+                "application/vnd.google-apps.script"
+        );
+
+        Pair<String, String> data = new ImmutablePair<>(file.getMimeType(), "");
+        if (googleMimeTypes.contains(data.getLeft())) {
+            data = getGoogleMimeTypeAndExtension(data.getLeft());
+            if (Objects.equals(data.getRight(), "")) {
+                throw new FileNotExportableException("Something went wrong: mimeType is empty");
+            }
+
+            commonService.getDrive()
+                    .files()
+                    .export(fileId, data.getLeft())
+                    .setAlt("media")
+                    .executeMediaAndDownloadTo(baos);
+        } else {
+            commonService.getDrive()
+                    .files()
+                    .get(fileId)
+                    .setAlt("media")
+                    .executeMediaAndDownloadTo(baos);
+        }
+
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName() + data.getRight());
 
         ByteArrayResource resource = new ByteArrayResource(baos.toByteArray());
         return ResponseEntity.ok()
@@ -68,6 +115,21 @@ public class FileService {
                 .contentLength(baos.size())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
+    }
+
+    private Pair<String, String> getGoogleMimeTypeAndExtension(String mimeType) {
+        return switch (mimeType) {
+            case "application/vnd.google-apps.document" ->
+                    new ImmutablePair<>("application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx");
+            case "application/vnd.google-apps.presentation" ->
+                    new ImmutablePair<>("application/vnd.openxmlformats-officedocument.presentationml.presentation", ".pptx");
+            case "application/vnd.google-apps.spreadsheet" ->
+                    new ImmutablePair<>("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
+            case "application/vnd.google-apps.drawing" -> new ImmutablePair<>("image/png", ".png");
+            case "application/vnd.google-apps.script" ->
+                    new ImmutablePair<>("application/vnd.google-apps.script+json", ".json");
+            default -> new ImmutablePair<>(mimeType, "");
+        };
     }
 
     public void createFolder(FolderDto folder) throws Exception {
