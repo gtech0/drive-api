@@ -20,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
@@ -86,7 +88,10 @@ public class FileService {
         }
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName() + data.getRight());
+        headers.add(
+                HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=" + reEncode(file.getName()) + data.getRight()
+        );
 
         ByteArrayResource resource = new ByteArrayResource(baos.toByteArray());
         return ResponseEntity.ok()
@@ -94,6 +99,12 @@ public class FileService {
                 .contentLength(baos.size())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
+    }
+
+    private static String reEncode(String input) {
+        Charset w1252 = Charset.forName("Windows-1252"); //Superset of ISO-8859-1
+        Charset utf8 = StandardCharsets.UTF_8;
+        return new String(input.getBytes(w1252), utf8);
     }
 
     private Pair<String, String> getGoogleMimeTypeAndExtension(String mimeType) {

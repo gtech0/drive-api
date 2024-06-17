@@ -23,7 +23,14 @@ public class WebConfig {
                     CorsConfiguration configuration = new CorsConfiguration();
                     configuration.setAllowedOrigins(List.of("*"));
                     configuration.setAllowedMethods(List.of("*"));
-                    configuration.setAllowedHeaders(List.of("*"));
+                    configuration.setAllowedHeaders(List.of(
+                            "Content-Type",
+                            "Access-Control-Allow-Headers",
+                            "Access-Control-Expose-Headers",
+                            "Content-Disposition",
+                            "Authorization",
+                            "X-Requested-With")
+                    );
                     configuration.setExposedHeaders(List.of("Content-Disposition"));
                     return configuration;
                 }))
