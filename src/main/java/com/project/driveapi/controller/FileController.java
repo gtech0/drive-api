@@ -52,8 +52,8 @@ public class FileController {
 
     @Operation(description = "View all files in drive")
     @GetMapping(value = "/files")
-    public List<GoogleFileDto> listFiles() throws Exception {
-        return fileService.listFiles();
+    public List<GoogleFileDto> listFiles(@RequestParam(name = "trashed", required = false) String trashed) throws Exception {
+        return fileService.listFiles(trashed);
     }
 
     @Operation(description = "Get basic info about file")

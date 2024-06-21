@@ -102,7 +102,7 @@ public class FileService {
     }
 
     private static String reEncode(String input) {
-        Charset w1252 = Charset.forName("Windows-1252"); //Superset of ISO-8859-1
+        Charset w1252 = Charset.forName("Windows-1252");
         Charset utf8 = StandardCharsets.UTF_8;
         return new String(input.getBytes(w1252), utf8);
     }
@@ -154,7 +154,7 @@ public class FileService {
                 .execute();
     }
 
-    public List<GoogleFileDto> listFiles() throws Exception {
+    public List<GoogleFileDto> listFiles(String isTrashed) throws Exception {
         List<GoogleFileDto> files = new ArrayList<>();
         FileList googleFiles = commonService.getDrive()
                 .files()
@@ -162,18 +162,23 @@ public class FileService {
                 .setFields("files(id,name,mimeType,createdTime,modifiedTime,permissions,trashed,size,parents)")
                 .execute();
 
+        List<String> trashed = List.of("true", "false");
         for (File googleFile : googleFiles.getFiles()) {
-            files.add(GoogleFileDto.builder()
-                    .id(googleFile.getId())
-                    .name(googleFile.getName())
-                    .mimeType(googleFile.getMimeType())
-                    .createdTime(commonService.unixToLocalDateTime(googleFile.getCreatedTime().getValue()))
-                    .modifiedTime(commonService.unixToLocalDateTime(googleFile.getModifiedTime().getValue()))
-                    .permissions(mapPermissions(googleFile))
-                    .trashed(googleFile.getTrashed())
-                    .size(googleFile.getSize())
-                    .parents(googleFile.getParents())
-                    .build());
+            if (Objects.equals(isTrashed, "true") && googleFile.getTrashed()
+                    || Objects.equals(isTrashed, "false") && !googleFile.getTrashed()
+                    || !trashed.contains(isTrashed)) {
+                files.add(GoogleFileDto.builder()
+                        .id(googleFile.getId())
+                        .name(googleFile.getName())
+                        .mimeType(googleFile.getMimeType())
+                        .createdTime(commonService.unixToLocalDateTime(googleFile.getCreatedTime().getValue()))
+                        .modifiedTime(commonService.unixToLocalDateTime(googleFile.getModifiedTime().getValue()))
+                        .permissions(mapPermissions(googleFile))
+                        .trashed(googleFile.getTrashed())
+                        .size(googleFile.getSize())
+                        .parents(googleFile.getParents())
+                        .build());
+            }
         }
         return files;
     }
