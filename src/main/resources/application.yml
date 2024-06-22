@@ -35,7 +35,7 @@ spring:
           max-age: 1
 
 urls:
-  main-page: http://127.0.0.1:5173/files
+  main-page: http://localhost:5173/files
 
 server:
   port: 8080
