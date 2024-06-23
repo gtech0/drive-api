@@ -100,23 +100,29 @@ public class CommentService {
     }
 
     private CommentGetDto commentBuilder(Comment comment) {
+        User commentAuthor = comment.getAuthor();
+        commentAuthor.setPhotoLink("https:" + commentAuthor.getPhotoLink());
         return CommentGetDto.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
                 .replies(comment
                         .getReplies()
                         .stream()
-                        .map(reply -> ReplyGetDto.builder()
-                                .id(reply.getId())
-                                .content(reply.getContent())
-                                .author(reply.getAuthor())
-                                .createdTime(commonService.unixToLocalDateTime(reply.getCreatedTime().getValue()))
-                                .modifiedTime(commonService.unixToLocalDateTime(reply.getModifiedTime().getValue()))
-                                .build()
+                        .map(reply -> {
+                            User replyAuthor = reply.getAuthor();
+                            replyAuthor.setPhotoLink("https:" + replyAuthor.getPhotoLink());
+                                    return ReplyGetDto.builder()
+                                            .id(reply.getId())
+                                            .content(reply.getContent())
+                                            .author(replyAuthor)
+                                            .createdTime(commonService.unixToLocalDateTime(reply.getCreatedTime().getValue()))
+                                            .modifiedTime(commonService.unixToLocalDateTime(reply.getModifiedTime().getValue()))
+                                            .build();
+                                }
                         )
                         .toList()
                 )
-                .author(comment.getAuthor())
+                .author(commentAuthor)
                 .createdTime(commonService.unixToLocalDateTime(comment.getCreatedTime().getValue()))
                 .modifiedTime(commonService.unixToLocalDateTime(comment.getModifiedTime().getValue()))
                 .build();
