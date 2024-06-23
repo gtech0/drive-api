@@ -2,6 +2,7 @@ package com.project.driveapi.service;
 
 import com.google.api.services.drive.model.Comment;
 import com.google.api.services.drive.model.Reply;
+import com.google.api.services.drive.model.User;
 import com.project.driveapi.dto.CommentDto;
 import com.project.driveapi.dto.CommentGetDto;
 import com.project.driveapi.dto.ReplyGetDto;
@@ -20,6 +21,7 @@ public class CommentService {
     public void addComment(String fileId, CommentDto comment) throws Exception {
         Comment newComment = new Comment();
         newComment.setContent(comment.getContent());
+        newComment.setAuthor(new User());
         commonService.getDrive()
                 .comments()
                 .create(fileId, newComment)
@@ -51,7 +53,7 @@ public class CommentService {
         List<Comment> comments = commonService.getDrive()
                 .comments()
                 .list(fileId)
-                .setFields("comments(id,content,replies)")
+                .setFields("comments(id,content,author,createdTime,modifiedTime,replies)")
                 .execute()
                 .getComments();
 
@@ -107,10 +109,16 @@ public class CommentService {
                         .map(reply -> ReplyGetDto.builder()
                                 .id(reply.getId())
                                 .content(reply.getContent())
+                                .author(reply.getAuthor())
+                                .createdTime(commonService.unixToLocalDateTime(reply.getCreatedTime().getValue()))
+                                .modifiedTime(commonService.unixToLocalDateTime(reply.getModifiedTime().getValue()))
                                 .build()
                         )
                         .toList()
                 )
+                .author(comment.getAuthor())
+                .createdTime(commonService.unixToLocalDateTime(comment.getCreatedTime().getValue()))
+                .modifiedTime(commonService.unixToLocalDateTime(comment.getModifiedTime().getValue()))
                 .build();
     }
 }
