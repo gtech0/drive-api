@@ -95,7 +95,7 @@ public class CommentService {
     public void deleteReply(String fileId, String commentId, String replyId) throws Exception {
         commonService.getDrive()
                 .replies()
-                .delete(fileId, replyId, commentId)
+                .delete(fileId, commentId, replyId)
                 .execute();
     }
 
