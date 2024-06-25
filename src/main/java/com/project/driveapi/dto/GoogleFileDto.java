@@ -21,6 +21,8 @@ public class GoogleFileDto implements Serializable {
 
     private LocalDateTime modifiedTime;
 
+    private String myRole;
+
     private List<Object> permissions;
 
     private boolean trashed;

@@ -3,6 +3,8 @@ package com.project.driveapi.service;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.google.api.services.drive.model.Permission;
+import com.google.api.services.drive.model.User;
 import com.project.driveapi.dto.*;
 import com.project.driveapi.exception.FileNotExportableException;
 import lombok.RequiredArgsConstructor;
@@ -29,30 +31,27 @@ import java.util.*;
 public class FileService {
     private final CommonService commonService;
 
-    public void uploadFiles(List<MultipartFile> multipartFiles,
-                            String targetFolderId) throws Exception {
-        for (MultipartFile multipartFile : multipartFiles) {
-            java.io.File file = multipartFileToFile(multipartFile);
+    public void uploadFile(MultipartFile multipartFile, String targetFolderId) throws Exception {
+        java.io.File file = multipartFileToFile(multipartFile);
 
-            String fileName = multipartFile.getOriginalFilename();
-            String fileMimeType = commonService.getMimeType(fileName);
+        String fileName = multipartFile.getOriginalFilename();
+        String fileMimeType = commonService.getMimeType(fileName);
 
-            FileContent content = new FileContent(fileMimeType, file);
+        FileContent content = new FileContent(fileMimeType, file);
 
-            File googleFile = new File();
-            googleFile.setName(fileName);
-            if (targetFolderId != null) {
-                googleFile.setParents(Collections.singletonList(targetFolderId));
-            }
-
-            commonService.getDrive()
-                    .files()
-                    .create(googleFile, content)
-                    .setFields("id")
-                    .execute();
-
-            FileUtils.forceDelete(file);
+        File googleFile = new File();
+        googleFile.setName(fileName);
+        if (targetFolderId != null) {
+            googleFile.setParents(Collections.singletonList(targetFolderId));
         }
+
+        commonService.getDrive()
+                .files()
+                .create(googleFile, content)
+                .setFields("id")
+                .execute();
+
+        FileUtils.forceDelete(file);
     }
 
     public ResponseEntity<Resource> downloadFile(String fileId) throws Exception {
@@ -167,12 +166,31 @@ public class FileService {
             if (Objects.equals(isTrashed, "true") && googleFile.getTrashed()
                     || Objects.equals(isTrashed, "false") && !googleFile.getTrashed()
                     || !trashed.contains(isTrashed)) {
+                String currentRole = null;
+                for (Permission permission : googleFile.getPermissions()) {
+                    if (!Objects.equals(permission.getId(), "anyoneWithLink")) {
+                        User user = commonService.getDrive()
+                                .about()
+                                .get()
+                                .setFields("*")
+                                .execute()
+                                .getUser();
+
+                        if (Objects.equals(permission.getEmailAddress(), user.getEmailAddress())) {
+                            currentRole = permission.getRole();
+                        }
+                    } else if (currentRole == null && Objects.equals(permission.getId(), "anyoneWithLink")) {
+                        currentRole = permission.getRole();
+                    }
+                }
+
                 files.add(GoogleFileDto.builder()
                         .id(googleFile.getId())
                         .name(googleFile.getName())
                         .mimeType(googleFile.getMimeType())
                         .createdTime(commonService.unixToLocalDateTime(googleFile.getCreatedTime().getValue()))
                         .modifiedTime(commonService.unixToLocalDateTime(googleFile.getModifiedTime().getValue()))
+                        .myRole(currentRole)
                         .permissions(mapPermissions(googleFile))
                         .trashed(googleFile.getTrashed())
                         .size(googleFile.getSize())

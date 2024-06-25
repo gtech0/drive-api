@@ -24,11 +24,11 @@ public class FileController {
     private final FileService fileService;
 
     @Operation(description = "Upload files")
-    @PostMapping(value = "/files/upload")
-    public void uploadFiles(@RequestParam(value = "files") List<MultipartFile> multipartFiles,
-                            @RequestParam(value = "targetFolderId", required = false) String targetFolderId
+    @PostMapping(value = "/files/upload", consumes = "multipart/form-data")
+    public void uploadFile(@RequestParam(value = "file") MultipartFile multipartFile,
+                           @RequestParam(value = "targetFolderId", required = false) String targetFolderId
     ) throws Exception {
-        fileService.uploadFiles(multipartFiles, targetFolderId);
+        fileService.uploadFile(multipartFile, targetFolderId);
     }
 
     @Operation(description = "Download selected file")
