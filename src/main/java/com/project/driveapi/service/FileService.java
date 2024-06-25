@@ -158,7 +158,7 @@ public class FileService {
         FileList googleFiles = commonService.getDrive()
                 .files()
                 .list()
-                .setFields("files(id,name,mimeType,createdTime,modifiedTime,permissions,trashed,size,parents)")
+                .setFields("*")
                 .execute();
 
         List<String> trashed = List.of("true", "false");
@@ -167,21 +167,31 @@ public class FileService {
                     || Objects.equals(isTrashed, "false") && !googleFile.getTrashed()
                     || !trashed.contains(isTrashed)) {
                 String currentRole = null;
-                for (Permission permission : googleFile.getPermissions()) {
-                    if (!Objects.equals(permission.getId(), "anyoneWithLink")) {
-                        User user = commonService.getDrive()
-                                .about()
-                                .get()
-                                .setFields("*")
-                                .execute()
-                                .getUser();
 
-                        if (Objects.equals(permission.getEmailAddress(), user.getEmailAddress())) {
+                if (googleFile.getPermissions() != null) {
+                    for (Permission permission : googleFile.getPermissions()) {
+                        if (!Objects.equals(permission.getId(), "anyoneWithLink")) {
+                            User user = commonService.getDrive()
+                                    .about()
+                                    .get()
+                                    .setFields("*")
+                                    .execute()
+                                    .getUser();
+
+                            if (Objects.equals(permission.getEmailAddress(), user.getEmailAddress())) {
+                                currentRole = permission.getRole();
+                            }
+                        } else if (currentRole == null && Objects.equals(permission.getId(), "anyoneWithLink")) {
                             currentRole = permission.getRole();
                         }
-                    } else if (currentRole == null && Objects.equals(permission.getId(), "anyoneWithLink")) {
-                        currentRole = permission.getRole();
                     }
+                } else {
+                    currentRole = "reader";
+                }
+
+                GoogleFileShortDto file = getFile("root");
+                if (googleFile.getParents() == null && !Objects.equals(currentRole, "owner")) {
+                    googleFile.setParents(List.of(file.getId()));
                 }
 
                 files.add(GoogleFileDto.builder()
