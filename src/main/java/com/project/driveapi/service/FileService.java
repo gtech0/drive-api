@@ -186,7 +186,11 @@ public class FileService {
                         }
                     }
                 } else {
-                    currentRole = "reader";
+                    if (googleFile.getCapabilities().getCanComment()) {
+                        currentRole = "commenter";
+                    } else {
+                        currentRole = "reader";
+                    }
                 }
 
                 GoogleFileShortDto file = getFile("root");
