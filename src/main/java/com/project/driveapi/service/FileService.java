@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -89,7 +90,7 @@ public class FileService {
         HttpHeaders headers = new HttpHeaders();
         headers.add(
                 HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=" + reEncode(file.getName()) + data.getRight()
+                URLEncoder.encode("attachment; filename=" + file.getName() + data.getRight(), StandardCharsets.UTF_8)
         );
 
         ByteArrayResource resource = new ByteArrayResource(baos.toByteArray());
@@ -158,7 +159,7 @@ public class FileService {
         FileList googleFiles = commonService.getDrive()
                 .files()
                 .list()
-                .setFields("*")
+                .setFields("files(id,name,mimeType,createdTime,modifiedTime,permissions,trashed,size,parents,capabilities)")
                 .execute();
 
         List<String> trashed = List.of("true", "false");
