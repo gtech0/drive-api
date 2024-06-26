@@ -90,7 +90,7 @@ public class FileService {
         HttpHeaders headers = new HttpHeaders();
         headers.add(
                 HttpHeaders.CONTENT_DISPOSITION,
-                URLEncoder.encode("attachment; filename=" + file.getName() + data.getRight(), StandardCharsets.UTF_8)
+                "attachment; filename=" + URLEncoder.encode(file.getName(), StandardCharsets.UTF_8) + data.getRight()
         );
 
         ByteArrayResource resource = new ByteArrayResource(baos.toByteArray());
