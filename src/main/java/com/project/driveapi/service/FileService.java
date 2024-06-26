@@ -23,7 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -101,12 +100,6 @@ public class FileService {
                 .body(resource);
     }
 
-    private static String reEncode(String input) {
-        Charset w1252 = Charset.forName("Windows-1252");
-        Charset utf8 = StandardCharsets.UTF_8;
-        return new String(input.getBytes(w1252), utf8);
-    }
-
     private Pair<String, String> getGoogleMimeTypeAndExtension(String mimeType) {
         return switch (mimeType) {
             case "application/vnd.google-apps.document" ->
@@ -175,7 +168,7 @@ public class FileService {
                             User user = commonService.getDrive()
                                     .about()
                                     .get()
-                                    .setFields("*")
+                                    .setFields("user")
                                     .execute()
                                     .getUser();
 
