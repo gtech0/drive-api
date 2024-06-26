@@ -247,6 +247,16 @@ public class FileService {
                 .setFields("id,name,mimeType,parents")
                 .execute();
 
+        File root = commonService.getDrive()
+                .files()
+                .get("root")
+                .setFields("id")
+                .execute();
+
+        if (!Objects.equals(googleFile.getId(), root.getId()) && googleFile.getParents() == null) {
+            googleFile.setParents(List.of(root.getId()));
+        }
+
         return GoogleFileShortDto.builder()
                 .id(googleFile.getId())
                 .name(googleFile.getName())
